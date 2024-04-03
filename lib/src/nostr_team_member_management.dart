@@ -33,14 +33,15 @@ class NostrTeamManager {
     );
   }
 
-  Future<NostrEvent> requestEvent(
-    NostrEvent eventToSign,
-    NostrKeyPairs localeKeyPair,
-  ) async {
+  Future<NostrEvent> requestEvent({
+    required String id,
+    required NostrEvent eventToSign,
+    required NostrKeyPairs localeKeyPair,
+  }) async {
     final eventToSignAsMap = eventToSign.toMap();
 
     final jsonRpcAction = NostrJsonRpcAction(
-      id: "something",
+      id: id,
       method: "sign_event",
       params: [
         jsonEncode(eventToSignAsMap),
