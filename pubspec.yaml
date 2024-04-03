@@ -8,7 +8,9 @@ environment:
 
 # Add regular dependencies here.
 dependencies:
+  dart_nostr: ^8.1.2
   equatable: ^2.0.5
+  kepler: ^1.0.3
   # path: ^1.8.0
 
 dev_dependencies:
