@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dart_nostr/dart_nostr.dart';
+import 'package:dart_nostr/nostr/model/ok.dart';
 import 'package:nostr_team_member_management/src/model/json_rpc_action.dart';
 import 'package:nostr_team_member_management/src/model/remote_signer.dart';
 import 'package:nostr_team_member_management/src/utils/nip04.dart';
@@ -8,6 +9,7 @@ import 'package:nostr_team_member_management/src/utils/utils.dart';
 
 class NostrTeamManager {
   final String connectionString;
+  final NostrKeyPairs localeKeyPair;
 
   RemoteSigner? _remoteSigner;
   final client = Nostr();
@@ -22,6 +24,7 @@ class NostrTeamManager {
 
   NostrTeamManager({
     required this.connectionString,
+    required this.localeKeyPair,
   }) {
     final isValid = NostrTeamUtils.isValidUriFormat(connectionString);
 
@@ -34,11 +37,10 @@ class NostrTeamManager {
     );
   }
 
-  Future<NostrEvent> requestEvent({
+  NostrEvent requestEvent({
     required String id,
     required NostrEvent eventToSign,
-    required NostrKeyPairs localeKeyPair,
-  }) async {
+  }) {
     final eventToSignAsMap = eventToSign.toMap();
 
     final jsonRpcAction = NostrJsonRpcAction(
@@ -55,15 +57,29 @@ class NostrTeamManager {
       localeKeyPair,
     );
 
-    final requestEvent = NostrEvent(
-      id: null,
-      sig: null,
-      createdAt: DateTime.now(),
-      kind: 24133,
+    final date = DateTime.now();
+
+    final tags = [
+      ["p", remoteSigner.remotePubKey]
+    ];
+
+    final kind = 24133;
+
+    final evId = NostrEvent.getEventId(
+      kind: kind,
+      content: content,
+      createdAt: date,
+      tags: tags,
       pubkey: localeKeyPair.public,
-      tags: [
-        ["p", remoteSigner.remotePubKey]
-      ],
+    );
+
+    final requestEvent = NostrEvent(
+      id: evId,
+      sig: localeKeyPair.sign(evId),
+      createdAt: date,
+      kind: kind,
+      pubkey: localeKeyPair.public,
+      tags: tags,
       content: content,
     );
 
@@ -74,5 +90,42 @@ class NostrTeamManager {
     return client.relaysService.init(
       relaysUrl: remoteSigner.relays,
     );
+  }
+
+  bool sendRequestEvent(
+    NostrEvent requestEvent, {
+    Function(String relay, NostrEventOkCommand ok)? onOk,
+  }) {
+    if (requestEvent.kind != 24133) {
+      throw Exception('Invalid kind for request event, check NIP 46');
+    }
+
+    client.relaysService.sendEventToRelays(requestEvent, onOk: (relay, ok) {
+      if (onOk != null) {
+        onOk(relay, ok);
+        return;
+      }
+
+      print('Relay: $relay, Ok: $ok');
+    });
+
+    return true;
+  }
+
+  NostrEventsStream subscribe(String id) {
+    final filter = NostrFilter(
+      kinds: [24133],
+    );
+
+    final sub = client.relaysService.startEventsSubscription(
+      request: NostrRequest(
+        filters: [
+          filter,
+        ],
+        subscriptionId: id,
+      ),
+    );
+
+    return sub;
   }
 }

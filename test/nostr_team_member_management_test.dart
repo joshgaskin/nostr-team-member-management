@@ -51,6 +51,7 @@ void main() {
 
       final manager = NostrTeamManager(
         connectionString: connectionString,
+        localeKeyPair: keyPair,
       );
 
       final id = DateTime.now().millisecondsSinceEpoch.toString();
@@ -58,7 +59,6 @@ void main() {
       final requestEv = await manager.requestEvent(
         id: id,
         eventToSign: eventToSignRemotly,
-        localeKeyPair: keyPair,
       );
 
       expect(requestEv, isA<NostrEvent>());
