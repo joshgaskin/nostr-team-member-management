@@ -24,8 +24,7 @@ void main() async {
     tags: [],
   );
 
-  final requestId =
-      DateTime.now().millisecondsSinceEpoch.toString() + "_Gwhyyy";
+  final requestId = "${DateTime.now().millisecondsSinceEpoch}_Gwhyyy";
 
   final requestEvent = manager.requestEvent(
     id: requestId,
