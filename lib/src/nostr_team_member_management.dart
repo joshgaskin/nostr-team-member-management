@@ -10,6 +10,7 @@ class NostrTeamManager {
   final String connectionString;
 
   RemoteSigner? _remoteSigner;
+  final client = Nostr();
 
   RemoteSigner get remoteSigner {
     if (_remoteSigner == null) {
@@ -48,10 +49,10 @@ class NostrTeamManager {
       ],
     );
 
-    final content = await Nip4.encode(
-      localeKeyPair,
-      remoteSigner.remotePubKey,
+    final content = Nip4.encryptContent(
       jsonEncode(jsonRpcAction.toMap()),
+      remoteSigner.remotePubKey,
+      localeKeyPair,
     );
 
     final requestEvent = NostrEvent(
@@ -67,5 +68,11 @@ class NostrTeamManager {
     );
 
     return requestEvent;
+  }
+
+  Future<void> connect() async {
+    return client.relaysService.init(
+      relaysUrl: remoteSigner.relays,
+    );
   }
 }

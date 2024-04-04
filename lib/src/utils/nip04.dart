@@ -8,32 +8,6 @@ import 'package:pointycastle/export.dart';
 
 /// Encrypted Direct Message
 class Nip4 {
-  /// Returns the EDMessage Encrypted Direct Message event (kind=4)
-  ///
-  /// ```dart
-  ///  var event = Event.from(
-  ///    pubkey: senderPubKey,
-  ///    created_at: 12121211,
-  ///    kind: 4,
-  ///    tags: [
-  ///      ["p", receiverPubKey],
-  ///      ["e", <event-id>, <relay-url>, <marker>],
-  ///    ],
-  ///    content: "wLzN+Wt2vKhOiO8v+FkSzA==?iv=X0Ura57af2V5SuP80O6KkA==",
-  ///  );
-  ///
-  ///  EDMessage eDMessage = Nip4.decode(event);
-  ///```
-  static Future<EDMessage?> decode(
-    NostrEvent event,
-    NostrKeyPairs keyPair,
-  ) async {
-    if (event.kind == 4) {
-      return _toEDMessage(event, keyPair);
-    }
-    return null;
-  }
-
   /// Returns EDMessage from event
   static Future<EDMessage> _toEDMessage(
     NostrEvent event,
@@ -82,36 +56,12 @@ class Nip4 {
     }
   }
 
-  static Future<String> encode(
-    NostrKeyPairs keyPair,
-    String receiver,
-    String content, {
-    String? subContent,
-    int? expiration,
-  }) async {
-    final enContent = encryptContent(
-      content,
-      receiver,
-      keyPair,
-    );
-
-    return enContent;
-  }
-
   static String encryptContent(
     String plainText,
     String peerPubkey,
     NostrKeyPairs keyPair,
   ) {
     return encrypt(keyPair.private, '02$peerPubkey', plainText);
-  }
-
-  static List<List<String>> toTags(String p, String e, int? expiration) {
-    final result = <List<String>>[];
-    result.add(['p', p]);
-    if (e.isNotEmpty) result.add(['e', e, '', 'reply']);
-    if (expiration != null) result.add(['expiration', expiration.toString()]);
-    return result;
   }
 }
 
